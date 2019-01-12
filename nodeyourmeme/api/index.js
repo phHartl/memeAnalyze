@@ -85,7 +85,10 @@ function parseMemeBody(body, url) {
     const name = $('.info h1 a')[0].children[0].data;
     const about = $('.bodycopy');
     const image = $('#maru > article > header > a')[0].attribs['href'];
-    const examples_parent = $('#various-examples').nextAll('center')[0];
+    let examples_parent = $('#various-examples').nextAll('center')[0];
+    if(examples_parent === undefined){
+        examples_parent = $('#notable-examples').nextAll('center')[0];
+    }
     let examples_images = [];
 
     if(examples_parent !== undefined) {
