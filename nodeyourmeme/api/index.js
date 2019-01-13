@@ -85,6 +85,7 @@ function parseMemeBody(body, url) {
     const name = $('.info h1 a')[0].children[0].data;
     const about = $('.bodycopy');
     const image = $('#maru > article > header > a')[0].attribs['href'];
+    const views = $('dd.views')[0].attribs['title'].replace(/\D/g,'');
     let examples_parent = $('#various-examples').nextAll('center')[0];
     if(examples_parent === undefined){
         examples_parent = $('#notable-examples').nextAll('center')[0];
@@ -110,7 +111,7 @@ function parseMemeBody(body, url) {
         const child = children[i];
 
         if (child.attribs.id === 'about') {
-            return {  name, about: childrenToText(children[i + 1].children), url: url, image: image, examples_images: examples_images};
+            return {  name, about: childrenToText(children[i + 1].children), url: url, image: image, examples_images: examples_images, views: views};
         }
     }
 
@@ -120,7 +121,7 @@ function parseMemeBody(body, url) {
         const text = childrenToText(paragraphs);
 
         if (text && text.trim() !== '') {
-            return { name, about: text, url: url, image: image, examples_images: examples_images};
+            return { name, about: text, url: url, image: image, examples_images: examples_images, views: views};
         }
     }
 
