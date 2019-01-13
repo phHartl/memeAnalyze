@@ -6,7 +6,7 @@ module.exports = require('./api');
 
 client = new vision.ImageAnnotatorClient();
 
-module.exports.search('My body is ready').then(function (result) {
+module.exports.search('My Body is ready').then(function (result) {
   textRecognitionByGoogle(result.image).then(function (res) {
     console.log("Google text recognition of main image\n" +res[0].description);
   });
