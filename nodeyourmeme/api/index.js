@@ -90,6 +90,9 @@ function parseMemeBody(body, url) {
     const recentImages = parseInt($('dd.photos')[0].attribs['title'].replace(/\D/g,''));
     if(examples_parent === undefined){
         examples_parent = $('#notable-examples').nextAll('center')[0];
+        if(examples_parent === undefined){
+            examples_parent = $('#examples').nextAll('center')[0];
+        }
     }if(recentImages !== 0 && examples_parent === undefined) {
         console.log("Recent images but no examples")
         //There are some recent user made images but no examples -> travel to new side and crawl them?
