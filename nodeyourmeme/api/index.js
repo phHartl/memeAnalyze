@@ -134,10 +134,13 @@ function parseMemeBody(body, url) {
     return null;
 }
 
-async function findPhotosForEntry(url) {
+async function findPhotosForEntry(url,page) {
+    if(page === undefined){
+        page = 1;
+    }
     let body;
     try {
-        body = await makeRequest(url + config.PHOTO_URL + config.SORT_URL);
+        body = await makeRequest(url + config.PHOTO_URL + config.SORT_URL + '/page/' +page);
     }catch (e) {
         throw e;
     }
