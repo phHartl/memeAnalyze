@@ -6,7 +6,7 @@ module.exports = require('./api');
 
 client = new vision.ImageAnnotatorClient();
 
-module.exports.search('My Body is ready').then(function (result) {
+module.exports.search('doge').then(function (result) {
   textRecognitionByGoogle(result.image).then(function (res) {
     console.log("Google text recognition of main image\n" +res[0].description);
   });
@@ -22,6 +22,13 @@ module.exports.search('My Body is ready').then(function (result) {
     })
   }
   ;
+  module.exports.searchPhotos(result.url).then(function (res) {
+    for (let i = 0; i < res.recent_examples.length; i++) {
+      download(res.recent_examples[i], result.name + '_recentExample' +[i]+ ".jpg", function () {
+        console.log("downloaded recent example");
+      })
+    }
+  });
 }).catch(console.error);
 
 module.exports.random().then(function (result) {
@@ -39,7 +46,7 @@ module.exports.random().then(function (result) {
       console.log("downloaded example")
     })};
 }).catch(console.error);
-
+//
 var download = function (uri, filename, callback) {
   request.head(uri, function (err, res, body) {
     console.log('content-type:', res.headers['content-type']);

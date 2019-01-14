@@ -87,18 +87,17 @@ function parseMemeBody(body, url) {
     const image = $('#maru > article > header > a')[0].attribs['href'];
     const views = $('dd.views')[0].attribs['title'].replace(/\D/g,'');
     let examples_parent = $('#various-examples').nextAll('center')[0];
-    const recentImages = parseInt($('dd.photos')[0].attribs['title'].replace(/\D/g,''));
+    const hasRecentImages = parseInt($('dd.photos')[0].attribs['title'].replace(/\D/g,''));
     if(examples_parent === undefined){
         examples_parent = $('#notable-examples').nextAll('center')[0];
         if(examples_parent === undefined){
             examples_parent = $('#examples').nextAll('center')[0];
         }
-    }if(recentImages !== 0 && examples_parent === undefined) {
+    }if(hasRecentImages !== 0 && examples_parent === undefined) {
         console.log("Recent images but no examples")
         //There are some recent user made images but no examples -> travel to new side and crawl them?
     }
     let examples_images = [];
-
     if(examples_parent !== undefined) {
 
         $ = cheerio.load(examples_parent);
@@ -134,6 +133,25 @@ function parseMemeBody(body, url) {
 
     return null;
 }
+
+async function findPhotosForEntry(url) {
+    let body;
+    try {
+        body = await makeRequest(url + config.PHOTO_URL + config.SORT_URL);
+    }catch (e) {
+        throw e;
+    }
+    return searchPhotos(body);
+}
+
+async function searchPhotos(body){
+    let recent_examples = [];
+    $ = cheerio.load(body);
+    let recentImagesGallery = $('#photo_gallery').children('.item');
+    console.log($);
+    for (let i = 0; i < recentImagesGallery.length; i++) {
+        recent_examples[i] = recentImagesGallery[i].children[1].children[1].attribs['data-src'].replace('masonry', 'original');
+    }return {recent_examples: recent_examples}};
 
 /**
  * Search for a given term.
@@ -184,4 +202,4 @@ async function doRandomSearch(tries = 3) {
     return parsed;
 }
 
-module.exports = { search: doSearch, random: doRandomSearch };
+module.exports = { search: doSearch, random: doRandomSearch, searchPhotos:findPhotosForEntry };
