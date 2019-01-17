@@ -73,6 +73,7 @@ function childrenToText(children) {
     return text;
 }
 
+//This function parses the body of a meme side, get's its image(s) and information
 function parseMemeBody(body, url) {
     let $ = cheerio.load(body);
 
@@ -88,26 +89,25 @@ function parseMemeBody(body, url) {
     const views = $('dd.views')[0].attribs['title'].replace(/\D/g,'');
     let examples_parent = $('#various-examples').nextAll('center')[0];
     const hasRecentImages = parseInt($('dd.photos')[0].attribs['title'].replace(/\D/g,''));
+    //Make sure to get all possible variation of examples
     if(examples_parent === undefined){
         examples_parent = $('#notable-examples').nextAll('center')[0];
         if(examples_parent === undefined){
             examples_parent = $('#examples').nextAll('center')[0];
         }
     }if(hasRecentImages !== 0 && examples_parent === undefined) {
-        console.log("Recent images but no examples")
-        //There are some recent user made images but no examples -> travel to new side and crawl them?
+        console.log("Recent images but no examples");
     }
     let examples_images = [];
     if(examples_parent !== undefined) {
 
         $ = cheerio.load(examples_parent);
 
-        const examples_node = $('a');
+        const examples_node = $('a img');
 
-        $ = cheerio.load(examples_parent);
-
+        console.log(name);
         for (let i = 0; i < examples_node.length; i++) {
-            examples_images[i] = ($('a')[i].children[0].attribs['data-src']);
+            examples_images[i] = (examples_node[i].attribs['data-src'].replace('small', 'original')); //Imageurl is stored inside this html attribute -> sometimes only small url is stored - RegEx
         }
     }
 
@@ -140,7 +140,7 @@ async function findPhotosForEntry(url,page) {
     }
     let body;
     try {
-        body = await makeRequest(url + config.PHOTO_URL + config.SORT_URL + '/page/' +page);
+        body = await makeRequest(url + config.PHOTO_URL + config.SORT_URL + config.PAGE_URL +page);
     }catch (e) {
         throw e;
     }
@@ -155,6 +155,38 @@ async function searchPhotos(body){
     for (let i = 0; i < recentImagesGallery.length; i++) {
         recent_examples[i] = recentImagesGallery[i].children[1].children[1].attribs['data-src'].replace('masonry', 'original');
     }return {recent_examples: recent_examples}};
+
+async function getImageMacros(page){
+    if(page === undefined){
+        page = 1;
+    }
+    let body;
+    try {
+        body = await makeRequest(config.BASE_URL+ config.IMAGE_MACRO_URL + config.PAGE_URL + page + config.IMAGE_MACRO_SORT);
+    }catch (e) {
+        throw e;
+    }
+    const imageMacrosUrls = findGridItemUrls(body);
+    let memes = [];
+    for (let i = 0; i < imageMacrosUrls.length; i++) {
+      memes[i] = parseMemeBody(await makeRequest(imageMacrosUrls[i], imageMacrosUrls[i]));
+    }
+    return memes;
+}
+
+function findGridItemUrls(body) {
+    const $ = cheerio.load(body);
+
+    const grid = $('.entry-grid-body');
+    const gridItems = grid.find('tr td a.photo');
+
+    let gridItemURLs = [];
+
+    for (let i = 0; i < gridItems.length ; i++) {
+     gridItemURLs[i] = config.BASE_URL + gridItems[i].attribs.href;
+    }
+    return gridItemURLs;
+}
 
 /**
  * Search for a given term.
@@ -205,4 +237,4 @@ async function doRandomSearch(tries = 3) {
     return parsed;
 }
 
-module.exports = { search: doSearch, random: doRandomSearch, searchPhotos:findPhotosForEntry };
+module.exports = { search: doSearch, random: doRandomSearch, searchPhotos:findPhotosForEntry, topImageMacros: getImageMacros };

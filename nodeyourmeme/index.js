@@ -6,7 +6,7 @@ module.exports = require('./api');
 
 client = new vision.ImageAnnotatorClient();
 
-module.exports.search('doge').then(function (result) {
+module.exports.search('scumbag steve').then(function (result) {
   textRecognitionByGoogle(result.image).then(function (res) {
     console.log("Google text recognition of main image\n" +res[0].description);
   });
@@ -46,7 +46,7 @@ module.exports.random().then(function (result) {
       console.log("downloaded example")
     })};
 }).catch(console.error);
-//
+
 var download = function (uri, filename, callback) {
   request.head(uri, function (err, res, body) {
     console.log('content-type:', res.headers['content-type']);
@@ -55,6 +55,10 @@ var download = function (uri, filename, callback) {
     request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
   });
 };
+
+module.exports.topImageMacros(1).then(function (result) {
+  console.log(result);
+});
 
 //Performs an API Request -> JSON File with credentials needed
 function textRecognitionByGoogle(fileName) {

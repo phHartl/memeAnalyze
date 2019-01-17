@@ -2,6 +2,8 @@ module.exports = {
     BASE_URL: 'http://knowyourmeme.com',
     SEARCH_URL: '/search?q=',
     RANDOM_URL: '/random',
+    IMAGE_MACRO_URL: '/types/image-macro',
+    IMAGE_MACRO_SORT: '?sort=views', //interestingly sorting works an other way here
     PHOTO_URL: '/photos/',
     SORT_URL: '/sort/views', //Sorts by most viewed
     PAGE_URL: '/page/',
