@@ -107,7 +107,7 @@ function parseMemeBody(body, url) {
 
         console.log(name);
         for (let i = 0; i < examples_node.length; i++) {
-            examples_images[i] = (examples_node[i].attribs['data-src'].replace('small', 'original')); //Imageurl is stored inside this html attribute -> sometimes only small url is stored - RegEx
+            examples_images[i] = (examples_node[i].attribs['data-src'].replace('small', 'original').replace('masonry', 'original')); //Imageurl is stored inside this html attribute -> sometimes only small url is stored - RegEx
         }
     }
 
