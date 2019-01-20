@@ -87,13 +87,13 @@ function parseMemeBody(body, url) {
     const about = $('.bodycopy');
     const image = $('#maru > article > header > a')[0].attribs['href'];
     const views = $('dd.views')[0].attribs['title'].replace(/\D/g,'');
-    let examples_parent = $('#various-examples').nextAll('center')[0];
+    let examples_parent = $('#various-examples').nextAll().has('a img')[0];
     const hasRecentImages = parseInt($('dd.photos')[0].attribs['title'].replace(/\D/g,''));
     //Make sure to get all possible variation of examples
     if(examples_parent === undefined){
-        examples_parent = $('#notable-examples').nextAll('center')[0];
+        examples_parent = $('#notable-examples').nextAll().has('a img')[0];
         if(examples_parent === undefined){
-            examples_parent = $('#examples').nextAll('center')[0];
+            examples_parent = $('#examples').nextAll().has('a img')[0];
         }
     }if(hasRecentImages !== 0 && examples_parent === undefined) {
         console.log("Recent images but no examples");
