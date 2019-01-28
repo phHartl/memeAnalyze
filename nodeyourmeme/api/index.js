@@ -6,6 +6,14 @@ const config = require('../config');
 function getSearchURL(term) {
     return config.BASE_URL + config.SEARCH_URL + term.split(' ').map(s => encodeURIComponent(s)).join('+');
 }
+function meme(name,about,url,image,example_images,views) {
+    this.url=url;
+    this.name=name;
+    this.about=about;
+    this.image=image;
+    this.views=views;
+    this.examples_images=example_images;
+}
 
 function makeRequest(url) {
     return new Promise((resolve, reject) => {
@@ -117,7 +125,8 @@ function parseMemeBody(body, url) {
         const child = children[i];
 
         if (child.attribs.id === 'about') {
-            return {  name, about: childrenToText(children[i + 1].children), url: url, image: image, examples_images: examples_images, views: views};
+           let newMeme= new meme(name,childrenToText(children[i + 1].children),url,image,examples_images,views);
+            return newMeme;
         }
     }
 
@@ -127,7 +136,8 @@ function parseMemeBody(body, url) {
         const text = childrenToText(paragraphs);
 
         if (text && text.trim() !== '') {
-            return { name, about: text, url: url, image: image, examples_images: examples_images, views: views};
+            let newMeme= new meme(name,text,url,image,examples_images,views);
+            return newMeme;
         }
     }
 
