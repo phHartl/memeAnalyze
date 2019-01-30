@@ -179,7 +179,7 @@ async function getImageMacros(page){
     const imageMacrosUrls = findGridItemUrls(body);
     let memes = [];
     for (let i = 0; i < imageMacrosUrls.length; i++) {
-      memes[i] = parseMemeBody(await makeRequest(imageMacrosUrls[i], imageMacrosUrls[i]));
+      memes[i] = parseMemeBody(await makeRequest(imageMacrosUrls[i]), imageMacrosUrls[i]);
     }
     return memes;
 }
