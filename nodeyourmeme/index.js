@@ -7,9 +7,9 @@ module.exports = require('./api');
 client = new vision.ImageAnnotatorClient();
 
 module.exports.search('Philosoraptor').then(function (result) {
-  // textRecognitionByGoogle(result.image).then(function (res) {
-  //   console.log("Google text recognition of main image\n" +res[0].description);
-  // });
+  textRecognitionByGoogle(result.image).then(function (res) {
+    console.log("Google text recognition of main image\n" +res[0].description);
+  });
   fs.writeFile(result.name + ".txt", result.about, function (err) {
 
   });
@@ -32,9 +32,9 @@ module.exports.search('Philosoraptor').then(function (result) {
 }).catch(console.error);
 
 module.exports.random().then(function (result) {
-  // textRecognitionByGoogle(result.image).then(function (res) {
-  //   console.log("Google text recognition of main image\n" +res[0].description);
-  // });
+  textRecognitionByGoogle(result.image).then(function (res) {
+    console.log("Google text recognition of main image\n" +res[0].description);
+  });
   fs.writeFile(result.name+".txt", result.about, function (err) {
 
   });

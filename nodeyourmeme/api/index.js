@@ -6,16 +6,20 @@ const config = require('../config');
 function getSearchURL(term) {
     return config.BASE_URL + config.SEARCH_URL + term.split(' ').map(s => encodeURIComponent(s)).join('+');
 }
-function meme(name,about,url,image,example_images,views,year,origin,tags) {
-    this.url=url;
-    this.name=name;
-    this.about=about;
-    this.image=image;
-    this.views=views;
-    this.examples_images=example_images;
-    this.year = year;
-    this.origin = origin;
-    this.tags = tags;
+
+//Memeclass prototype -> one meme is a incarnation connected to its template
+class Meme{
+    constructor(url,templateName,templateAbout,templateUrl,templateImage,templateViews,templateYear,templateOrigin,templateTags){
+        this.url = url;
+        this.templateName = templateName;
+        this.templateAbout = templateAbout;
+        this.templateUrl = templateUrl;
+        this.templateImage = templateImage;
+        this.templateViews = templateViews;
+        this.templateYear = templateYear;
+        this.templateOrigin = templateOrigin;
+        this.templateTags = templateTags;
+    }
 }
 
 function makeRequest(url) {
@@ -62,30 +66,8 @@ async function findFirstSearchResult(term) {
 
     return config.BASE_URL + searchItem.attribs.href;
 }
-
-function childrenToText(children) {
-    let text = '';
-
-    for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-
-        if (child.type === 'text') {
-            if (!/^\s*\[\d+]\s*$/.test(child.data))
-            {
-                text += child.data;
-            }
-
-            continue;
-        }
-
-        text += childrenToText(child.children);
-    }
-
-    return text;
-}
-
 //This function parses the body of a meme side, get's its image(s) and information
-function parseMemeBody(body, url) {
+async function parseMemeBody(body, url) {
     let $ = cheerio.load(body);
 
     const isMeme = $('#maru > article > #entry_body > aside > dl > a')[0].attribs['href'].includes('meme');
@@ -95,7 +77,7 @@ function parseMemeBody(body, url) {
     }
 
     const name = $('.info h1 a')[0].children[0].data;
-    const about = $('.bodycopy');
+    const about = $('.bodycopy #about').next().text();
     const image = $('#maru > article > header > a')[0].attribs['href'];
     const views = $('dd.views')[0].attribs['title'].replace(/\D/g,'');
     const year = $('dt').filter(function () {
@@ -128,35 +110,29 @@ function parseMemeBody(body, url) {
 
         const examples_node = $('a img');
 
-        console.log(name);
         for (let i = 0; i < examples_node.length; i++) {
             examples_images[i] = (examples_node[i].attribs['data-src'].replace('small', 'original').replace('masonry', 'original')); //Imageurl is stored inside this html attribute -> sometimes only small url is stored - RegEx
         }
-    }
-
-    const children = about.children();
-
-    for (let i = 0; i < children.length; i++) {
-        const child = children[i];
-
-        if (child.attribs.id === 'about') {
-           let newMeme= new meme(name,childrenToText(children[i + 1].children),url,image,examples_images,views,year,origin,tags);
-            return newMeme;
+        console.log("Done with main page");
+        //Additionally get user uploaded images -> doing a ton of requests here
+        if(hasRecentImages !== 0) {
+            return await findPhotosForEntry(url).then(function (res) {
+                let images = examples_images.concat(res.recent_examples);
+                let memes = [];
+                for (let i = 0; i < images.length; i++) {
+                    memes[i] = new Meme(images[i], name, about, url, image, views, year, origin, tags);
+                }
+                console.log("Memes progressed...");
+                return memes;
+            });
+        }else {
+            let memes = [];
+            for (let i = 0; i < examples_images.length; i++) {
+                memes[i] = new Meme(examples_images[i],name,about,url,image,views,year,origin,tags)
+            }
+            return memes;
         }
     }
-
-    const paragraphs = about.find('p');
-
-    if (paragraphs && paragraphs.length !== 0) {
-        const text = childrenToText(paragraphs);
-
-        if (text && text.trim() !== '') {
-            let newMeme= new meme(name,text,url,image,examples_images,views,year,origin,tags);
-            return newMeme;
-        }
-    }
-
-    return null;
 }
 
 async function findPhotosForEntry(url,page) {
@@ -176,7 +152,6 @@ async function searchPhotos(body){
     let recent_examples = [];
     $ = cheerio.load(body);
     let recentImagesGallery = $('#photo_gallery').children('.item');
-    console.log($);
     for (let i = 0; i < recentImagesGallery.length; i++) {
         recent_examples[i] = recentImagesGallery[i].children[1].children[1].attribs['data-src'].replace('masonry', 'original');
     }return {recent_examples: recent_examples}};
@@ -245,6 +220,9 @@ async function doRandomSearch(tries = 3) {
     let url = config.BASE_URL + config.RANDOM_URL;
     try {
         body = await makeRequest(url);
+        let $ = cheerio.load(body);
+        //Get the corresponding url we have been redirected to
+        url = $('link[rel=canonical]').attr('href');
     } catch (e) {
         if (tries > 0) {
             return doRandomSearch(--tries);
@@ -253,7 +231,7 @@ async function doRandomSearch(tries = 3) {
         throw e;
     }
 
-    const parsed = parseMemeBody(body, url);
+    const parsed = await parseMemeBody(body, url);
 
     if (!parsed && tries > 0) {
         return doRandomSearch(--tries);
