@@ -6,13 +6,16 @@ const config = require('../config');
 function getSearchURL(term) {
     return config.BASE_URL + config.SEARCH_URL + term.split(' ').map(s => encodeURIComponent(s)).join('+');
 }
-function meme(name,about,url,image,example_images,views) {
+function meme(name,about,url,image,example_images,views,year,origin,tags) {
     this.url=url;
     this.name=name;
     this.about=about;
     this.image=image;
     this.views=views;
     this.examples_images=example_images;
+    this.year = year;
+    this.origin = origin;
+    this.tags = tags;
 }
 
 function makeRequest(url) {
@@ -95,6 +98,18 @@ function parseMemeBody(body, url) {
     const about = $('.bodycopy');
     const image = $('#maru > article > header > a')[0].attribs['href'];
     const views = $('dd.views')[0].attribs['title'].replace(/\D/g,'');
+    const year = $('dt').filter(function () {
+        return $(this).text().trim() === 'Year';
+    }).next().text().trim();
+
+    const origin = $('dt').filter(function () {
+        return $(this).text().trim() === 'Origin';
+    }).next().text().trim();
+
+    const tags = $('dt').filter(function () {
+        return $(this).text().trim() === 'Tags';
+    }).next().text().trim();
+
     let examples_parent = $('#various-examples').nextAll().has('a img')[0];
     const hasRecentImages = parseInt($('dd.photos')[0].attribs['title'].replace(/\D/g,''));
     //Make sure to get all possible variation of examples
@@ -125,7 +140,7 @@ function parseMemeBody(body, url) {
         const child = children[i];
 
         if (child.attribs.id === 'about') {
-           let newMeme= new meme(name,childrenToText(children[i + 1].children),url,image,examples_images,views);
+           let newMeme= new meme(name,childrenToText(children[i + 1].children),url,image,examples_images,views,year,origin,tags);
             return newMeme;
         }
     }
@@ -136,7 +151,7 @@ function parseMemeBody(body, url) {
         const text = childrenToText(paragraphs);
 
         if (text && text.trim() !== '') {
-            let newMeme= new meme(name,text,url,image,examples_images,views);
+            let newMeme= new meme(name,text,url,image,examples_images,views,year,origin,tags);
             return newMeme;
         }
     }
