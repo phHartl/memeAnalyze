@@ -7,46 +7,46 @@ module.exports = require('./api');
 
 client = new vision.ImageAnnotatorClient();
 
-module.exports.search('Philosoraptor').then(function (result) {
-  textRecognitionByGoogle(result.image).then(function (res) {
-    console.log("Google text recognition of main image\n" +res[0].description);
-  });
-  fs.writeFile(result.name + ".txt", result.about, function (err) {
-
-  });
-  download(result.image, result.name + '.jpg', function () {
-    console.log("downloaded main picture");
-  });
-  for (let i = 0; i < result.examples_images.length; i++) {
-    download(result.examples_images[i], result.name + "_example" + [i + 1] + ".jpg", function () {
-      console.log("downloaded example")
-    })
-  }
-  ;
-  module.exports.searchPhotos(result.url).then(function (res) {
-    for (let i = 0; i < res.recent_examples.length; i++) {
-      download(res.recent_examples[i], result.name + '_recentExample' +[i]+ ".jpg", function () {
-        console.log("downloaded recent example");
-      })
-    }
-  });
-}).catch(console.error);
-
-module.exports.random().then(function (result) {
-  textRecognitionByGoogle(result.image).then(function (res) {
-    console.log("Google text recognition of main image\n" +res[0].description);
-  });
-  fs.writeFile(result.name+".txt", result.about, function (err) {
-
-  });
-  download(result.image,result.name+ '.jpg', function () {
-    console.log("downloaded main picture");
-  });
-  for (let i = 0; i < result.examples_images.length; i++) {
-    download(result.examples_images[i],result.name+"_example"+[i]+".jpg", function () {
-      console.log("downloaded example")
-    })};
-}).catch(console.error);
+// module.exports.search('Philosoraptor').then(function (result) {
+//   textRecognitionByGoogle(result.image).then(function (res) {
+//     console.log("Google text recognition of main image\n" +res[0].description);
+//   });
+//   fs.writeFile(result.name + ".txt", result.about, function (err) {
+//
+//   });
+//   download(result.image, result.name + '.jpg', function () {
+//     console.log("downloaded main picture");
+//   });
+//   for (let i = 0; i < result.examples_images.length; i++) {
+//     download(result.examples_images[i], result.name + "_example" + [i + 1] + ".jpg", function () {
+//       console.log("downloaded example")
+//     })
+//   }
+//   ;
+//   module.exports.searchPhotos(result.url).then(function (res) {
+//     for (let i = 0; i < res.recent_examples.length; i++) {
+//       download(res.recent_examples[i], result.name + '_recentExample' +[i]+ ".jpg", function () {
+//         console.log("downloaded recent example");
+//       })
+//     }
+//   });
+// }).catch(console.error);
+//
+// module.exports.random().then(function (result) {
+//   textRecognitionByGoogle(result.image).then(function (res) {
+//     console.log("Google text recognition of main image\n" +res[0].description);
+//   });
+//   fs.writeFile(result.name+".txt", result.about, function (err) {
+//
+//   });
+//   download(result.image,result.name+ '.jpg', function () {
+//     console.log("downloaded main picture");
+//   });
+//   for (let i = 0; i < result.examples_images.length; i++) {
+//     download(result.examples_images[i],result.name+"_example"+[i]+".jpg", function () {
+//       console.log("downloaded example")
+//     })};
+// }).catch(console.error);
 
 var download = function (uri, filename, callback) {
   request.head(uri, function (err, res, body) {

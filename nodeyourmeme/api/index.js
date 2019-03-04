@@ -120,14 +120,19 @@ async function parseMemeBody(body, url) {
     //Additionally get user uploaded images -> doing a ton of requests here
     let memes = [];
     if(hasRecentImages !== 0){
-        return await findPhotosForEntry(url).then(function (res) {
-            let images = examples_images.concat(res.recent_examples);
-            for (let i = 0; i < images.length; i++) {
-                memes[i] = new Meme(images[i], name, about, url, image, views, year, origin, tags);
-            }
-            console.log("Memes user pictures progressed...");
-            return memes;
+      let maxPages = 3; //Caution -> hasRecentImages/10 is max but you will get ip banned doing this
+      for (let i = 0; i < maxPages; i++) {
+        let memesPerPage = await findPhotosForEntry(url, i).then(function (res) {
+          let currentImages = res.recent_examples;
+          let currentMemes = [];
+          for (let j = 0; j < currentImages.length ; j++) {
+            currentMemes[j] = (new Meme(currentImages[j],name,about,url,image,views,year,origin,tags));
+          }
+          return currentMemes;
         });
+        memes.push.apply(memes,memesPerPage);
+      }
+      return memes;
     }else {
         console.log("Meme has no user examples");
         for (let i = 0; i < examples_images.length; i++) {
@@ -242,4 +247,4 @@ async function doRandomSearch(tries = 3) {
     return parsed;
 }
 
-module.exports = { search: doSearch, random: doRandomSearch, searchPhotos:findPhotosForEntry, topImageMacros: getImageMacros };
+module.exports = { search: doSearch, random: doRandomSearch, searchPhotos:findPhotosForEntry, topImageMacros: getImageMacros, };
