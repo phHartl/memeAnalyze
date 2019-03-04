@@ -104,6 +104,7 @@ async function parseMemeBody(body, url) {
         console.log("Recent images but no examples");
     }
     let examples_images = [];
+    console.log("Meme currently progressing:\n" + name);
     if(examples_parent !== undefined) {
 
         $ = cheerio.load(examples_parent);
@@ -113,25 +114,26 @@ async function parseMemeBody(body, url) {
         for (let i = 0; i < examples_node.length; i++) {
             examples_images[i] = (examples_node[i].attribs['data-src'].replace('small', 'original').replace('masonry', 'original')); //Imageurl is stored inside this html attribute -> sometimes only small url is stored - RegEx
         }
-        console.log("Done with main page");
-        //Additionally get user uploaded images -> doing a ton of requests here
-        if(hasRecentImages !== 0) {
-            return await findPhotosForEntry(url).then(function (res) {
-                let images = examples_images.concat(res.recent_examples);
-                let memes = [];
-                for (let i = 0; i < images.length; i++) {
-                    memes[i] = new Meme(images[i], name, about, url, image, views, year, origin, tags);
-                }
-                console.log("Memes progressed...");
-                return memes;
-            });
-        }else {
-            let memes = [];
-            for (let i = 0; i < examples_images.length; i++) {
-                memes[i] = new Meme(examples_images[i],name,about,url,image,views,year,origin,tags)
+
+        console.log("Done with main page crawling");
+    }else {console.log("Meme has no examples provided");}
+    //Additionally get user uploaded images -> doing a ton of requests here
+    let memes = [];
+    if(hasRecentImages !== 0){
+        return await findPhotosForEntry(url).then(function (res) {
+            let images = examples_images.concat(res.recent_examples);
+            for (let i = 0; i < images.length; i++) {
+                memes[i] = new Meme(images[i], name, about, url, image, views, year, origin, tags);
             }
+            console.log("Memes user pictures progressed...");
             return memes;
+        });
+    }else {
+        console.log("Meme has no user examples");
+        for (let i = 0; i < examples_images.length; i++) {
+            memes[i] = new Meme(examples_images[i],name,about,url,image,views,year,origin,tags)
         }
+        return memes;
     }
 }
 

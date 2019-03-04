@@ -17,15 +17,16 @@
     "knowyourmeme",
     "api"
   ],
-  "author": "ArcticZeroo",
+  "author": "ArcticZeroo, scaredn00b",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/beastwilson/nodeyourmeme/issues"
+    "url": "https://github.com/scaredn00b/memeAnalyze/issues"
   },
-  "homepage": "https://github.com/beastwilson/nodeyourmeme#readme",
+  "homepage": "https://github.com/scaredn00b/memeAnalyze#readme",
   "dependencies": {
     "@google-cloud/vision": "^0.24.0",
     "cheerio": "^1.0.0-rc.2",
+    "objects-to-csv": "^1.2.1",
     "request": "^2.83.0"
   },
   "devDependencies": {

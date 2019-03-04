@@ -1,5 +1,6 @@
 var fs = require('fs'),
   request = require('request'),
+  objectsToCsv = require('objects-to-csv'),
   vision = require('@google-cloud/vision');
 
 module.exports = require('./api');
@@ -57,7 +58,14 @@ var download = function (uri, filename, callback) {
 };
 
 module.exports.topImageMacros(1).then(function (result) {
-  console.log(result);
+  (async () => {
+    let memes2D = await Promise.all(result);
+    //Convert the corresponding 2D array into a 1D to save as csv
+    let memes = [].concat(...memes2D);
+    let csv = new objectsToCsv(memes);
+    // Save to file:
+    await csv.toDisk('./memes.csv');
+  })();
 });
 
 //Performs an API Request -> JSON File with credentials needed
