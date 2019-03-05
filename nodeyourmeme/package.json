@@ -25,6 +25,7 @@
   "homepage": "https://github.com/scaredn00b/memeAnalyze#readme",
   "dependencies": {
     "@google-cloud/vision": "^0.24.0",
+    "simple-rate-limiter": "^0.2.3",
     "cheerio": "^1.0.0-rc.2",
     "objects-to-csv": "^1.2.1",
     "request": "^2.83.0"
