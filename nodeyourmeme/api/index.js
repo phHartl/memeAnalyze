@@ -1,4 +1,5 @@
-const request = require('request');
+const limit = require('simple-rate-limiter');
+const request = limit(require("request")).to(7).per(3000);
 const cheerio = require('cheerio');
 
 const config = require('../config');
@@ -8,9 +9,10 @@ function getSearchURL(term) {
 }
 
 //Memeclass prototype -> one meme is a incarnation connected to its template
-class Meme{
-    constructor(url,templateName,templateAbout,templateUrl,templateImage,templateViews,templateYear,templateOrigin,templateTags){
+class Meme {
+    constructor(url, text, templateName, templateAbout, templateUrl, templateImage, templateViews, templateYear, templateOrigin, templateTags) {
         this.url = url;
+        this.text = text;
         this.templateName = templateName;
         this.templateAbout = templateAbout;
         this.templateUrl = templateUrl;
@@ -50,8 +52,7 @@ async function findFirstSearchResult(term) {
     let body;
     try {
         body = await makeRequest(getSearchURL(term));
-    }
-    catch (e) {
+    } catch (e) {
         throw e;
     }
 
@@ -66,20 +67,21 @@ async function findFirstSearchResult(term) {
 
     return config.BASE_URL + searchItem.attribs.href;
 }
+
 //This function parses the body of a meme side, get's its image(s) and information
 async function parseMemeBody(body, url) {
     let $ = cheerio.load(body);
 
     const isMeme = $('#maru > article > #entry_body > aside > dl > a')[0].attribs['href'].includes('meme');
 
-    if(!isMeme){
+    if (!isMeme) {
         return null;
     }
 
     const name = $('.info h1 a')[0].children[0].data;
     const about = $('.bodycopy #about').next().text();
     const image = $('#maru > article > header > a')[0].attribs['href'];
-    const views = $('dd.views')[0].attribs['title'].replace(/\D/g,'');
+    const views = $('dd.views')[0].attribs['title'].replace(/\D/g, '');
     const year = $('dt').filter(function () {
         return $(this).text().trim() === 'Year';
     }).next().text().trim();
@@ -93,19 +95,20 @@ async function parseMemeBody(body, url) {
     }).next().text().trim();
 
     let examples_parent = $('#various-examples').nextAll().has('a img')[0];
-    const hasRecentImages = parseInt($('dd.photos')[0].attribs['title'].replace(/\D/g,''));
+    const hasRecentImages = parseInt($('dd.photos')[0].attribs['title'].replace(/\D/g, ''));
     //Make sure to get all possible variation of examples
-    if(examples_parent === undefined){
+    if (examples_parent === undefined) {
         examples_parent = $('#notable-examples').nextAll().has('a img')[0];
-        if(examples_parent === undefined){
+        if (examples_parent === undefined) {
             examples_parent = $('#examples').nextAll().has('a img')[0];
         }
-    }if(hasRecentImages !== 0 && examples_parent === undefined) {
+    }
+    if (hasRecentImages !== 0 && examples_parent === undefined) {
         console.log("Recent images but no examples");
     }
     let examples_images = [];
     console.log("Meme currently progressing:\n" + name);
-    if(examples_parent !== undefined) {
+    if (examples_parent !== undefined) {
 
         $ = cheerio.load(examples_parent);
 
@@ -116,67 +119,74 @@ async function parseMemeBody(body, url) {
         }
 
         console.log("Done with main page crawling");
-    }else {console.log("Meme has no examples provided");}
+    } else {
+        console.log("Meme has no examples provided");
+    }
     //Additionally get user uploaded images -> doing a ton of requests here
     let memes = [];
-    if(hasRecentImages !== 0){
-      let maxPages = 3; //Caution -> hasRecentImages/10 is max but you will get ip banned doing this
-      for (let i = 0; i < maxPages; i++) {
-        let memesPerPage = await findPhotosForEntry(url, i).then(function (res) {
-          let currentImages = res.recent_examples;
-          let currentMemes = [];
-          for (let j = 0; j < currentImages.length ; j++) {
-            currentMemes[j] = (new Meme(currentImages[j],name,about,url,image,views,year,origin,tags));
-          }
-          return currentMemes;
-        });
-        memes.push.apply(memes,memesPerPage);
-      }
-      return memes;
-    }else {
+    if (hasRecentImages !== 0) {
+        let maxPages = Math.ceil(hasRecentImages/20); //Caution -> hasRecentImages/20 is max but you will get ip banned doing this
+        for (let i = 0; i < maxPages; i++) {
+            let memesPerPage = await findPhotosForEntry(url, i).then(async function (res) {
+                let currentImages = res.recent_examples;
+                let currentMemes = [];
+                for (let j = 0; j < currentImages.length; j++) {
+                    await textRecognitionByGoogle(currentImages[j]).then(function (res) {
+                        currentMemes[j] = (new Meme(currentImages[j], res[0].description, name, about, url, image, views, year, origin, tags));
+                    });
+                }
+                return currentMemes;
+            });
+            memes.push.apply(memes, memesPerPage);
+        }
+        console.log("Crawled all user generated images for\n" + name);
+        return memes;
+    } else {
         console.log("Meme has no user examples");
         for (let i = 0; i < examples_images.length; i++) {
-            memes[i] = new Meme(examples_images[i],name,about,url,image,views,year,origin,tags)
+            memes[i] = new Meme(examples_images[i], "", name, about, url, image, views, year, origin, tags)
         }
         return memes;
     }
 }
 
-async function findPhotosForEntry(url,page) {
-    if(page === undefined){
+async function findPhotosForEntry(url, page) {
+    if (page === undefined) {
         page = 1;
     }
     let body;
     try {
-        body = await makeRequest(url + config.PHOTO_URL + config.SORT_URL + config.PAGE_URL +page);
-    }catch (e) {
+        body = await makeRequest(url + config.PHOTO_URL + config.SORT_URL + config.PAGE_URL + page);
+    } catch (e) {
         throw e;
     }
     return searchPhotos(body);
 }
 
-async function searchPhotos(body){
+async function searchPhotos(body) {
     let recent_examples = [];
     $ = cheerio.load(body);
     let recentImagesGallery = $('#photo_gallery').children('.item');
     for (let i = 0; i < recentImagesGallery.length; i++) {
         recent_examples[i] = recentImagesGallery[i].children[1].children[1].attribs['data-src'].replace('masonry', 'original');
-    }return {recent_examples: recent_examples}};
+    }
+    return {recent_examples: recent_examples}
+};
 
-async function getImageMacros(page){
-    if(page === undefined){
+async function getImageMacros(page) {
+    if (page === undefined) {
         page = 1;
     }
     let body;
     try {
-        body = await makeRequest(config.BASE_URL+ config.IMAGE_MACRO_URL + config.PAGE_URL + page + config.IMAGE_MACRO_SORT);
-    }catch (e) {
+        body = await makeRequest(config.BASE_URL + config.IMAGE_MACRO_URL + config.PAGE_URL + page + config.IMAGE_MACRO_SORT);
+    } catch (e) {
         throw e;
     }
     const imageMacrosUrls = findGridItemUrls(body);
     let memes = [];
     for (let i = 0; i < imageMacrosUrls.length; i++) {
-      memes[i] = parseMemeBody(await makeRequest(imageMacrosUrls[i]), imageMacrosUrls[i]);
+        memes[i] = parseMemeBody(await makeRequest(imageMacrosUrls[i]), imageMacrosUrls[i]);
     }
     return memes;
 }
@@ -189,8 +199,8 @@ function findGridItemUrls(body) {
 
     let gridItemURLs = [];
 
-    for (let i = 0; i < gridItems.length ; i++) {
-     gridItemURLs[i] = config.BASE_URL + gridItems[i].attribs.href;
+    for (let i = 0; i < gridItems.length; i++) {
+        gridItemURLs[i] = config.BASE_URL + gridItems[i].attribs.href;
     }
     return gridItemURLs;
 }
@@ -247,4 +257,25 @@ async function doRandomSearch(tries = 3) {
     return parsed;
 }
 
-module.exports = { search: doSearch, random: doRandomSearch, searchPhotos:findPhotosForEntry, topImageMacros: getImageMacros, };
+//Performs an API Request -> JSON File with credentials needed
+function textRecognitionByGoogle(fileName) {
+    return new Promise(function (resolve, reject) {
+        client
+            .textDetection(fileName)
+            .then(results => {
+                const detections = results[0].textAnnotations;
+                if (detections.length !== 0) {
+                    resolve(detections);
+                } else {
+                    resolve([{description: ""}]);
+                }
+            });
+    })
+};
+
+module.exports = {
+    search: doSearch,
+    random: doRandomSearch,
+    searchPhotos: findPhotosForEntry,
+    topImageMacros: getImageMacros,
+};
