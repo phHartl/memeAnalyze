@@ -4,6 +4,9 @@ library(tidyr)
 library(stringr)
 library(ggplot2)
 library(tidytext)
+library(reshape2)
+library(wordcloud)
+#install.packages("wordcloud")
 
 # https://www.tidytextmining.com/sentiment.html
 
@@ -16,6 +19,13 @@ library(tidytext)
 
 # Loading clean function for using in mutate
 source("R/clean_text.R")
+
+# Loading Stopwords
+custom_stop_words <- bind_rows(tibble(word = c("miss"), 
+                                      lexicon = c("custom")), 
+                               stop_words)
+
+custom_stop_words
 
 ##############################################
 
@@ -70,5 +80,27 @@ meme_template_word_counts %>%
   labs(y = "Contribution to sentiment",
        x = NULL) +
   coord_flip()
+
+
+
+###
+
+# Wordclouds
+meme_template_words %>%
+  # stopwords - to be commented out?
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+
+
+meme_template_words %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("gray20", "gray80"),
+                   max.words = 100)
+
+
+
 
 
