@@ -1,3 +1,5 @@
+#install.packages("wordcloud")
+
 library(janeaustenr)
 library(dplyr)
 library(tidyr)
@@ -6,16 +8,15 @@ library(ggplot2)
 library(tidytext)
 library(reshape2)
 library(wordcloud)
-#install.packages("wordcloud")
+library(readr)
+
 
 # https://www.tidytextmining.com/sentiment.html
 
 
 # Import data
-#library(readr)
-#data_suggest <- read_csv("data_suggest.csv")
-#View(data_suggest)
-
+memes <- read_csv("nodeyourmeme/memes.csv")
+View(memes)
 
 # Loading clean function for using in mutate
 source("R/clean_text.R")
@@ -29,14 +30,15 @@ custom_stop_words
 
 ##############################################
 
-meme_template_texts<-data_suggest%>%
+
+meme_template_texts<-memes%>%
   # meme template topic model / Taking all memes with same meme-template origin 
-  group_by(templ_title, meme_id=ID)%>%
-  summarise(newDoc=paste0(example_meme_text,collapse=" "))%>%
+  group_by(templateName, meme_id=rownames(memes))%>%
+  summarise(newDoc=paste0(text,collapse=" "))%>%
   ungroup()%>%
   mutate(newDoc=clean_text(newDoc))%>%
   filter(str_count(newDoc)>3)%>%
-  group_by(templ_title)%>%
+  group_by(templateName)%>%
   mutate(index=row_number())%>%
   ungroup()
   
@@ -51,13 +53,15 @@ meme_template_words<-meme_template_texts%>%
 
 meme_template_sentiment <- meme_template_words %>%
   inner_join(get_sentiments("bing"))%>%
-  count(templ_title, index, sentiment) %>%
+  count(templateName, index, sentiment) %>%
   spread(sentiment, n, fill = 0) %>%
   mutate(sentiment = positive - negative)
 
-ggplot(meme_template_sentiment, aes(index, sentiment, fill = templ_title)) +
+ggplot(meme_template_sentiment, aes(index, sentiment, fill = templateName)) +
   geom_col(show.legend = FALSE) +
-  facet_wrap(~templ_title, ncol = 2, scales = "free_x")
+  #facet_wrap(~templateName, ncol = 2, scales = "free_y")
+  facet_wrap(~templateName, ncol = 4, scales = "free")
+  #facet_wrap(~templateName, ncol = 2, scales = "free_x")
 
 
 
@@ -71,7 +75,7 @@ meme_template_word_counts <- meme_template_words %>%
 
 meme_template_word_counts %>%
   group_by(sentiment) %>%
-  top_n(10) %>%
+  top_n(15) %>%
   ungroup() %>%
   mutate(word = reorder(word, n)) %>%
   ggplot(aes(word, n, fill = sentiment)) +
@@ -88,9 +92,16 @@ meme_template_word_counts %>%
 # Wordclouds
 meme_template_words %>%
   # stopwords - to be commented out?
+  # maybe sorting numbers?
   anti_join(stop_words) %>%
   count(word) %>%
   with(wordcloud(word, n, max.words = 100))
+
+meme_template_words %>%
+  # stopwords - to be commented out?
+  #anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 250))
 
 
 meme_template_words %>%
