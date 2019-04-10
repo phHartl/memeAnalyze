@@ -19,14 +19,19 @@ require("tm")
 source("R/clean_text.R")
 
 # Import data
-#memes <- read_csv("nodeyourmeme/memes.csv")
+memes <- read_csv("nodeyourmeme/memes.csv")
+memes <- memes%>%filter(!is.na(text))
+
 #View(memes)
 
 ##############################################
 
 # Reading stopwords list
+
+
 stopwords <- read_csv("R/stopwords.txt", col_names = FALSE)
-stopwords
+stopwords_custom <- read_csv("R/stopwords_custom.txt", col_names = FALSE)
+
 
 # Loading Stopwords
 custom_stop_words <- bind_rows(tibble(word = c("memegenerator"), 
@@ -49,7 +54,7 @@ prepare_for_LDA_tokens<-prepare_for_LDA%>%
 
 # Delete Stopwords
 prepare_for_LDA_tokens<-prepare_for_LDA_tokens%>%
-                anti_join(stopwords,by=c("tokens"="X1"))
+                anti_join(stopwords_custom,by=c("tokens"="X1"))
 
 prepare_for_LDA_tokens <- prepare_for_LDA_tokens%>%filter(tokens != "")
 
@@ -113,20 +118,22 @@ ggplot(data=plot_topics, mapping=aes(term, beta, fill = as.factor(topic))) +
 #https://cran.r-project.org/web/packages/ldatuning/vignettes/topics.html
 #Welche Anzahl an Topics ist optimal?
 
+if(FALSE){
+  require(ldatuning)
+  
+  result <- FindTopicsNumber(
+    tokens_tm,
+    topics = seq(from = 25, to = 50, by = 5),
+    metrics = c("Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
+    method = "Gibbs",
+    control = list(seed = 77),
+    mc.cores = 3L,
+    verbose = TRUE
+  )
+  
+  FindTopicsNumber_plot(result)
+}
 
-require(ldatuning)
-
-result <- FindTopicsNumber(
-  tokens_tm,
-  topics = seq(from = 25, to = 50, by = 5),
-  metrics = c("Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
-  method = "Gibbs",
-  control = list(seed = 77),
-  mc.cores = 3L,
-  verbose = TRUE
-)
-
-FindTopicsNumber_plot(result)
 
 
 

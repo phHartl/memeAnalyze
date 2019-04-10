@@ -47,7 +47,7 @@ boxplot2(emo_box[,c(2:9)],
          main="Distribution of emotion words count in top 16 meme templates")
 
 # Terms for all eight emotions types were expressed albeit at variable rates. 
-# Looking at the box plot, fear showed an outlier. 
+# Looking at the box plot, fear and anger showed an outlier. 
 
 # Besides, anticipation and trust were skewed to the left, whereas joy 
 # was skewed to the right. The n= below each box plot indicates the number 
@@ -97,7 +97,7 @@ ggplot(emotions_diff, aes(x=templateName, y=difference, colour=difference>0)) +
   geom_segment(aes(x=templateName, xend=templateName, y=0, yend=difference),
                size=1.1, alpha=0.8) +
   geom_point(size=1.0) +
-  xlab("Emotion Terms") +
+  xlab(" ") + # "Emotion Terms"
   ylab("Net emotion words count (%)") +
   ggtitle("Emotion words expressed in top 16 meme templates") + 
   #theme(legend.position="none") +
@@ -117,7 +117,7 @@ ggplot(emotions_diff, aes(x=templateName, y=difference, colour=difference>0)) +
 
 
 
-
+quantile(emo_box$fear)
 
 
 
