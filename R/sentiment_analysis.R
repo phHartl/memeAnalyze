@@ -17,7 +17,7 @@ library(readr)
 # Import data
 memes <- read_csv("nodeyourmeme/memes.csv")
 #View(memes)
-memes <- memes%>%filter(!is.na(text))
+memes <- memes%>%filter(!is.na(text))%>%filter(!grepl('.gif', url))
 
 memes_without_text <- memes%>%filter(is.na(text))
 
