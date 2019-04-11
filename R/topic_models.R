@@ -29,8 +29,8 @@ memes <- memes%>%filter(!is.na(text))
 # Reading stopwords list
 
 
-stopwords <- read_csv("R/stopwords.txt", col_names = FALSE)
-stopwords_custom <- read_csv("R/stopwords_custom.txt", col_names = FALSE)
+stopwords <- read_csv("R/stopword_lists/stopwords.txt", col_names = FALSE)
+stopwords_custom <- read_csv("R/stopword_lists/stopwords_custom.txt", col_names = FALSE)
 
 
 # Loading Stopwords
@@ -62,6 +62,9 @@ prepare_for_LDA_tokens <- prepare_for_LDA_tokens%>%filter(tokens != "")
 prepare_for_LDA_tokens<-prepare_for_LDA_tokens%>%
   count(templateName,tokens,sort=TRUE)
 
+#### Sorting out too often used terms 
+prepare_for_LDA_tokens <- prepare_for_LDA_tokens%>%filter(n<150)
+
 #### Sorting out rarely used terms 
 prepare_for_LDA_tokens <- prepare_for_LDA_tokens%>%filter(n > 10)
 
@@ -75,8 +78,8 @@ tokens_tm
 ###########################################################
 
 gc()
-# We train our topic model with 10 topics and VEM
-memes_topic_model<-LDA(tokens_tm,method = "Gibbs",k=10,control = list(seed = 1234))
+# We train our topic model with k topics and VEM
+memes_topic_model<-LDA(tokens_tm,method = "Gibbs",k=12,control = list(seed = 1234))
 
 
 # Back-conversion of the LDA-onject via tidy
@@ -123,7 +126,7 @@ if(FALSE){
   
   result <- FindTopicsNumber(
     tokens_tm,
-    topics = seq(from = 25, to = 50, by = 5),
+    topics = seq(from = 5, to = 20, by = 1),
     metrics = c("Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
     method = "Gibbs",
     control = list(seed = 77),

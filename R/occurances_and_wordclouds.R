@@ -19,8 +19,8 @@ source("R/clean_text.R")
 
 # Reading stopwords list
 
-stopwords <- read_csv("R/stopwords.txt", col_names = FALSE)
-stopwords_custom <- read_csv("R/stopwords_custom.txt", col_names = FALSE)
+stopwords <- read_csv("R/stopword_lists/stopwords.txt", col_names = FALSE)
+stopwords_custom <- read_csv("R/stopword_lists/stopwords_custom.txt", col_names = FALSE)
 
 ##############################################
 
