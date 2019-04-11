@@ -1,3 +1,6 @@
+# install.packages("quanteda") 
+
+library(quanteda)
 library(reshape2)
 library(wordcloud)
 library(readr)
@@ -106,38 +109,18 @@ word_freq_total <- meme_template_words %>%
 
 # Wordclouds
 
-pal<-brewer.pal(7, "Set3")
-pal2<-brewer.pal(8, "Dark2")
+# Package info:
+# https://rdrr.io/cran/quanteda/man/textplot_wordcloud.html
 
-meme_template_words %>%
-  anti_join(stopwords_custom,by=c("word"="X1")) %>%
-  count(word)
-
-
-meme_template_words %>%
-  anti_join(stopwords_custom,by=c("word"="X1")) %>%
-  count(word) %>%
-  with(wordcloud(word, n, max.words = 250))
-
-meme_template_words %>%
-  anti_join(stopwords_custom,by=c("word"="X1")) %>%
-  count(word) %>%
-  with(wordcloud(word, n, max.words = 100))
+# Color variant 
+# col <- sapply(seq(0.1, 1, 0.1), function(x) adjustcolor("#1F78B4", x))
 
 
+words <-meme_template_words %>%
+  anti_join(stopwords_custom,by=c("word"="X1"))
 
-png("wordcloud.png", width = 12, height = 8, units = 'in', res = 300)
-res <-wordcloud(word_freq_total$word, 
-                word_freq_total$n, 
-                max.words = Inf, 
-                scale = c(8,.02), 
-                random.order = FALSE, 
-                rot.per = 0.15, 
-                colors=pal2)
-
-
-
-
-
+word_dfm <- dfm(words$word, remove = stopwords_custom)
+textplot_wordcloud(word_dfm, rotation = 0.25, 
+                   color = rev(RColorBrewer::brewer.pal(10, "RdBu")))
 
 
