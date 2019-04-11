@@ -1,6 +1,12 @@
 library(reshape2)
 library(wordcloud)
 library(readr)
+library(gplots)
+require(tidyverse)
+require(tidytext)
+require(RColorBrewer)
+require(ggplot2)
+
 
 
 # https://www.tidytextmining.com/sentiment.html
@@ -21,6 +27,7 @@ source("R/clean_text.R")
 
 stopwords <- read_csv("R/stopword_lists/stopwords.txt", col_names = FALSE)
 stopwords_custom <- read_csv("R/stopword_lists/stopwords_custom.txt", col_names = FALSE)
+stopwords_watermarks <- read_csv("R/stopword_lists/stopwords_watermarks.txt", col_names = FALSE)
 
 ##############################################
 
@@ -46,6 +53,38 @@ meme_template_words<-meme_template_texts%>%
 
 # Occurances
 
+
+# Word/Token counts
+ave_words_count <- memes %>%
+  group_by(templateName) %>%
+  mutate(templateMakros= n()) %>%
+  ungroup() %>%
+  unnest_tokens(token, text) %>%  # Tokenization
+  anti_join(stopwords_watermarks,by=c("token"="X1")) %>%     # Excluding stop words             
+  # filter(!grepl('[0-9]', word)) %>%         # Excluding numbers
+  # left_join(get_sentiments("nrc"), by = "word") %>%
+  group_by(templateName, templateMakros) %>%
+  summarize(totalTokens= n()) %>%
+  mutate(averageTokens=round((totalTokens/templateMakros), digits=0))%>%
+  ungroup() %>%
+  write.csv(.,file = "R/csv-out/total_and_average_tokens_in_templates.csv")
+
+most_frequent_words <- memes %>%
+  unnest_tokens(token, text) %>%  # Tokenization
+  anti_join(stopwords_watermarks,by=c("token"="X1")) %>%     # Excluding stop words             
+  group_by(templateName, token) %>%
+  summarize(occurances= n()) %>%
+  ungroup()%>%
+  group_by(templateName) %>%
+  top_n(10) %>%
+  write.csv(.,file = "R/csv-out/10_most_frequent_tokens_in_templates.csv")
+
+
+total_and_average_tokens_in_templates <- read_csv("R/csv-out/total_and_average_tokens_in_templates.csv")
+most_frequent_words <- read_csv("R/csv-out/10_most_frequent_tokens_in_templates.csv")
+
+
+gc()
 
 ####
 word_freq_per_template <- meme_template_words %>%
