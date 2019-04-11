@@ -32,7 +32,6 @@ stopwords_custom <- read_csv("R/stopword_lists/stopwords_custom.txt", col_names 
 
 ##############################################
 
-
 meme_template_texts<-memes%>%
   # meme template topic model / Taking all memes with same meme-template origin 
   group_by(templateName, meme_id=rownames(memes))%>%
@@ -47,6 +46,10 @@ meme_template_texts<-memes%>%
 
 meme_template_words<-meme_template_texts%>%
   unnest_tokens(word, newDoc)
+
+# spread of memes inside corpus -> percent of each meme
+
+meme_occurences <- meme_template_texts%>%group_by(templateName)%>%summarise(n=n()/6797)
 
 
 ###
