@@ -13,6 +13,11 @@ theme_set(theme_bw(12))
 
 # Import data
 memes <- read_csv("nodeyourmeme/memes.csv")
+
+memes <- memes%>%filter(!is.na(text))%>%filter(!grepl('.gif', url))
+
+memes_without_text <- memes%>%filter(is.na(text))
+
 #View(memes)
 
 ######################
@@ -20,7 +25,7 @@ memes <- read_csv("nodeyourmeme/memes.csv")
 # pull emotion words and aggregate by year and emotion terms
 emotions <- memes %>% 
   unnest_tokens(word, text) %>%                           
-  anti_join(stop_words, by = "word") %>%                  
+  anti_join(stopwords_custom, by=c("word"="X1")) %>%                  
   filter(!grepl('[0-9]', word)) %>%
   left_join(get_sentiments("nrc"), by = "word") %>%
   filter(!(sentiment == "negative" | sentiment == "positive")) %>%

@@ -47,7 +47,10 @@ meme_template_texts<-memes%>%
 meme_template_words<-meme_template_texts%>%
   unnest_tokens(word, newDoc)
 
-# spread of memes inside corpus -> percent of each meme
+meme_template_words<-meme_template_words%>%
+  anti_join(stopwords_custom,by=c("word"="X1"))
+
+# spread of memes inside corpus -> percent of each meme 
 
 meme_occurences <- meme_template_texts%>%group_by(templateName)%>%summarise(n=n()/6797)
 
