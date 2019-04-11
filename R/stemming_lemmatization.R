@@ -5,7 +5,11 @@
 # This code is from source:
 # http://www.bernhardlearns.com/2017/04/cleaning-words-with-r-stemming.html
 
+#install.packages('rJava')
+library(rJava)
 library(koRpus)
+#Install english language
+library(koRpus.lang.en)
 library(SnowballC)
 
 library(tidyverse) 
@@ -43,17 +47,19 @@ lemma_unique<-lemma_unique %>%
   mutate(word_stem = wordStem(word_clean, language="english"))
 
 
-
-
-
 #### Lemmatization
 # therefore, TreeTager has to be installed!:
 # http://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/#Windows
-lemma_tagged <- treetag(lemma_unique$word_clean, treetagger="manual", 
-                        format="obj", TT.tknz=FALSE , lang="en",
-                        TT.options=list(
-                          path="c:/Users/domin/Desktop/Grusch/TreeTagger/", preset="en")
-)
+#lemma_tagged <- treetag(lemma_unique$word_clean, treetagger="manual", 
+#                        format="obj", TT.tknz=FALSE , lang="en",
+#                        TT.options=list(
+#                          path="~/Downloads/TreeTagger", preset = "en")
+#)
+
+#Should use a predefined config instead for better results -> we would need a proper lexcion
+
+lemma_tagged <- treetag(lemma_unique$word_clean, format = "obj",
+                          treetagger="/home/philipp/Downloads/TreeTagger/cmd/tree-tagger-english", lang="en")
 
 
 lemma_tagged_tbl <- tbl_df(lemma_tagged@TT.res)
@@ -88,8 +94,60 @@ lemma_unique <- lemma_unique %>%
   mutate(word_synonym = map2(lemma, wclass,synonyms_failsafe))
 
 
+if (!exists("word_frequencies")){
+  if (!file.exists("lemma.num")){
+    res <- tryCatch(download.file("http://www.kilgarriff.co.uk/BNClists/lemma.num",
+                                  "lemma.num", mode = "wb"),
+                    error=function(e) 1)
+  }
+  word_frequencies <- 
+    readr::read_table2("lemma.num",
+                       col_names=c("sort_order", "frequency", "word", "wclass"))
+  
+  # harmonize wclass types with existing
+  word_frequencies <- word_frequencies %>%
+    mutate(wclass = case_when(.$wclass == "conj" ~ "conjunction",
+                              .$wclass == "adv" ~ "adverb",
+                              .$wclass == "v" ~ "verb",
+                              .$wclass == "det" ~ "determiner",
+                              .$wclass == "pron" ~ "pronoun",
+                              .$wclass == "a" ~ "adjective",
+                              .$wclass == "n" ~ "noun",
+                              .$wclass == "prep" ~ "preposition")
+    )
+  
+}
 
+frequent_synonym <- function(syn_list, pos=NA, word_frequencies){
+  syn_vector <- syn_list$syn
+  
+  if (!is.na(pos) && pos %in% unique(word_frequencies$wclass)){
+    syn_tbl <- tibble(word = syn_vector,
+                      wclass = pos)
+  } else {
+    syn_tbl <- tibble(word = syn_vector)
+  }
+  
+  suppressMessages(
+    syn_tbl <- syn_tbl %>%
+      inner_join(word_frequencies) %>%
+      arrange(frequency)
+  )
+  
+  return(ifelse(nrow(syn_tbl)==0,NA,syn_tbl$word[[1]]))
+}
 
+lemma_unique <- lemma_unique %>%
+  mutate(synonym = map_chr(word_synonym, frequent_synonym, 
+                           word_frequencies = word_frequencies)) %>%
+  mutate(synonym = ifelse(is.na(synonym), lemma, synonym))
+
+n_orig <- lemma_unique %>% 
+  inner_join(tidytext::get_sentiments("bing"),
+             by=c("word" = "word")) %>% 
+  nrow()
+
+n_orig
 
 
 
