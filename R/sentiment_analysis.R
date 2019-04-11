@@ -124,66 +124,10 @@ meme_template_word_counts %>%
 
 
 
-
-############
-
-
-# Occurances
-
-
-####
-word_freq_per_template <- meme_template_words %>%
-  anti_join(stopwords_custom,by=c("word"="X1")) %>%
-  group_by(word, templateName) %>%
-  summarise(n=n()) %>%
-  ungroup() %>%
-  group_by(templateName) %>%
-  top_n(10)
-
-word_freq_total <- meme_template_words %>%
-  anti_join(stopwords,by=c("word"="X1")) %>%
-  group_by(word) %>%
-  summarise(n=n()) 
-
-
-
-############
-
-# Wordclouds
-
-pal<-brewer.pal(7, "Set3")
-pal2<-brewer.pal(8, "Dark2")
-
-meme_template_words %>%
-  anti_join(stopwords_custom,by=c("word"="X1")) %>%
-  count(word)
-
-
-meme_template_words %>%
-  anti_join(stopwords_custom,by=c("word"="X1")) %>%
-  count(word) %>%
-  with(wordcloud(word, n, max.words = 250))
-
-meme_template_words %>%
-  anti_join(stopwords_custom,by=c("word"="X1")) %>%
-  count(word) %>%
-  with(wordcloud(word, n, max.words = 100))
-
-
 meme_template_words %>%
   inner_join(get_sentiments(sentiment_lib)) %>%
   count(word, sentiment, sort = TRUE) %>%
   acast(word ~ sentiment, value.var = "n", fill = 0) %>%
   comparison.cloud(colors = c("gray20", "gray80"),
                    max.words = 100)
-
-
-png("wordcloud.png", width = 12, height = 8, units = 'in', res = 300)
-res <-wordcloud(word_freq_total$word, 
-                word_freq_total$n, 
-                max.words = Inf, 
-                scale = c(8,.02), 
-                random.order = FALSE, 
-                rot.per = 0.15, 
-                colors=pal2)
 
