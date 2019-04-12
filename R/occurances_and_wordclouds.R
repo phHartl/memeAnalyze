@@ -86,12 +86,20 @@ most_frequent_words <- memes %>%
 total_and_average_tokens_in_templates <- read_csv("R/csv-out/total_and_average_tokens_in_templates.csv")
 most_frequent_words <- read_csv("R/csv-out/10_most_frequent_tokens_in_templates.csv")
 
+if(FALSE){
+  stopword_testing <- word_freq_total%>%
+    filter(grepl('meme', word))%>%
+    sort(n, decreasing = FALSE) %>%
+    select(word) %>%
+    write.csv(.,file = "R/csv-out/stopword_testing.csv")
+}
 
 gc()
 
 ####
 word_freq_per_template <- meme_template_words %>%
   anti_join(stopwords_custom,by=c("word"="X1")) %>%
+  anti_join(stopwords_watermarks,by=c("word"="X1")) %>%
   group_by(word, templateName) %>%
   summarise(n=n()) %>%
   ungroup() %>%
@@ -99,7 +107,8 @@ word_freq_per_template <- meme_template_words %>%
   top_n(10)
 
 word_freq_total <- meme_template_words %>%
-  anti_join(stopwords,by=c("word"="X1")) %>%
+  anti_join(stopwords_custom,by=c("word"="X1")) %>%
+  anti_join(stopwords_watermarks,by=c("word"="X1")) %>%
   group_by(word) %>%
   summarise(n=n()) 
 
@@ -117,9 +126,11 @@ word_freq_total <- meme_template_words %>%
 
 
 words <-meme_template_words %>%
-  anti_join(stopwords_custom,by=c("word"="X1"))
+  anti_join(stopwords_custom,by=c("word"="X1")) %>%
+  anti_join(stopwords_watermarks,by=c("word"="X1")) 
+  
 
-word_dfm <- dfm(words$word, remove = stopwords_custom)
+word_dfm <- dfm(words$word, remove = dplyr::union(stopwords_custom, stopwords_watermarks))
 textplot_wordcloud(word_dfm, rotation = 0.25, 
                    color = rev(RColorBrewer::brewer.pal(10, "RdBu")))
 
