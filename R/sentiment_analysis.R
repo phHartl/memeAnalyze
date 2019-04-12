@@ -60,7 +60,7 @@ meme_occurences <- meme_template_texts%>%group_by(templateName)%>%summarise(n=n(
 ###
 sentiment_lib = "bing"
 #sentiment_lib = "afinn"
-#sentiment_lib = "NRC"
+#sentiment_lib = "nrc"
 
 # Plot sentiment of each meme template
 
@@ -113,7 +113,7 @@ ggplot(philosoraptor_sentiment, aes(index, sentiment, fill = templateName)) +
 
 # Plot most positive and negative words
 meme_template_word_counts <- meme_template_words %>%
-  inner_join(get_sentiments(sentiment_lib), by = c("word" = "lemma")) %>%
+  inner_join(get_sentiments(sentiment_lib), by = c("lemma" = "word")) %>%
   count(word, sentiment, sort = TRUE) %>%
   ungroup()
 
