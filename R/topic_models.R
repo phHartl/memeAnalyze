@@ -52,7 +52,11 @@ prepare_for_LDA<-memes%>%
 
 prepare_for_LDA_tokens<-prepare_for_LDA%>%
   unnest_tokens(input=newDoc,output=tokens,
-                token=stringr::str_split,pattern=" ")                    
+                token=stringr::str_split,pattern=" ")
+
+#Before continuing execute stemming and lemmatization
+
+prepare_for_LDA_tokens<-prepare_for_LDA_tokens%>%filter(nchar(tokens) > 1)%>%inner_join(lemma_unique, by=c("tokens" = "word"))
 
 # Delete Stopwords
 prepare_for_LDA_tokens<-prepare_for_LDA_tokens%>%
@@ -62,7 +66,7 @@ prepare_for_LDA_tokens <- prepare_for_LDA_tokens%>%filter(tokens != "")
 
 # Counting all terms in the documents
 prepare_for_LDA_tokens<-prepare_for_LDA_tokens%>%
-  count(templateName,tokens,sort=TRUE)
+  count(templateName,word_stem,sort=TRUE)
 
 #### Sorting out too often used terms 
 prepare_for_LDA_tokens <- prepare_for_LDA_tokens%>%filter(n<150)
@@ -72,7 +76,7 @@ prepare_for_LDA_tokens <- prepare_for_LDA_tokens%>%filter(n > 10)
 
 # Convert this tidy df in a docterm-object
 tokens_tm<-prepare_for_LDA_tokens%>%
-  cast_dtm(templateName,tokens,n)
+  cast_dtm(templateName,word_stem,n)
 
 # Looking at DT-object
 tokens_tm
@@ -81,58 +85,58 @@ tokens_tm
 
 gc()
 # We train our topic model with k topics and VEM
-memes_topic_model<-LDA(tokens_tm,method = "Gibbs",k=12,control = list(seed = 1234))
-
-
-# Back-conversion of the LDA-onject via tidy
-tidy_memes_topic_model<-tidy(memes_topic_model)
-
-# Getting top 5 terms (= most likely coming from this topic) of each of the Topics
-top_terms_memes_topic_model<-tidy_memes_topic_model%>%
-  group_by(topic)%>%
-  top_n(5, beta)%>%
-  ungroup()%>%
-  arrange(topic, -beta)
-
-
-lda_gamma <- tidy(memes_topic_model, matrix = "gamma")
-ggplot(lda_gamma, aes(gamma)) +
-  geom_histogram() +
-  scale_y_log10() +
-  labs(title = "Distribution of probabilities for all topics",
-       y = "Number of documents", x = expression(gamma))
-
-
-plot_topics<-top_terms_memes_topic_model%>%
-  mutate(term=reorder(term,beta))%>%
-  group_by(topic,term)%>%
-  arrange(desc(beta))%>%ungroup%>%
-  mutate(term = factor(paste(term, topic, sep = "__"), 
-                       levels = rev(paste(term, topic, sep = "__"))))
-
-
-ggplot(data=plot_topics, mapping=aes(term, beta, fill = as.factor(topic))) +
-  geom_col(show.legend = FALSE) +
-  coord_flip() +
-  scale_x_discrete(labels = function(x) gsub("__.+$", "", x)) +
-  labs(title = "Top terms in each LDA topic",
-       x = NULL, y = expression(beta)) +
-  facet_wrap(~ topic, ncol = 5, scales = "free")
+  memes_topic_model<-LDA(tokens_tm,method = "Gibbs",k=16,control = list(seed = 66))
+  
+  
+  # Back-conversion of the LDA-onject via tidy
+  tidy_memes_topic_model<-tidy(memes_topic_model)
+  
+  # Getting top 5 terms (= most likely coming from this topic) of each of the Topics
+  top_terms_memes_topic_model<-tidy_memes_topic_model%>%
+    group_by(topic)%>%
+    top_n(5, beta)%>%
+    ungroup()%>%
+    arrange(topic, -beta)
+  
+  
+  lda_gamma <- tidy(memes_topic_model, matrix = "gamma")
+  ggplot(lda_gamma, aes(gamma)) +
+    geom_histogram() +
+    scale_y_log10() +
+    labs(title = "Distribution of probabilities for all topics",
+         y = "Number of documents", x = expression(gamma))
+  
+  
+  plot_topics<-top_terms_memes_topic_model%>%
+    mutate(term=reorder(term,beta))%>%
+    group_by(topic,term)%>%
+    arrange(desc(beta))%>%ungroup%>%
+    mutate(term = factor(paste(term, topic, sep = "__"), 
+                         levels = rev(paste(term, topic, sep = "__"))))
+  
+  
+  ggplot(data=plot_topics, mapping=aes(term, beta, fill = as.factor(topic))) +
+    geom_col(show.legend = FALSE) +
+    coord_flip() +
+    scale_x_discrete(labels = function(x) gsub("__.+$", "", x)) +
+    labs(title = "Top terms in each LDA topic",
+         x = NULL, y = expression(beta)) +
+    facet_wrap(~ topic, ncol = 5, scales = "free")
 
 
 #https://cran.r-project.org/web/packages/ldatuning/vignettes/topics.html
 #Welche Anzahl an Topics ist optimal?
 
-if(FALSE){
+if(TRUE){
   require(ldatuning)
   
   result <- FindTopicsNumber(
     tokens_tm,
-    topics = seq(from = 5, to = 20, by = 1),
+    topics = seq(from = 10, to = 25, by = 1),
     metrics = c("Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
     method = "Gibbs",
     control = list(seed = 77),
-    mc.cores = 3L,
+    mc.cores = 7L,
     verbose = TRUE
   )
   

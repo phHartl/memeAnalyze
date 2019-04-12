@@ -50,6 +50,8 @@ meme_template_words<-meme_template_texts%>%
 meme_template_words<-meme_template_words%>%
   anti_join(stopwords_custom,by=c("word"="X1"))
 
+meme_template_words<-meme_template_words%>%inner_join(lemma_unique)%>%filter(!is.na(lemma))
+
 # spread of memes inside corpus -> percent of each meme 
 
 meme_occurences <- meme_template_texts%>%group_by(templateName)%>%summarise(n=n()/6797)
@@ -63,7 +65,7 @@ sentiment_lib = "bing"
 # Plot sentiment of each meme template
 
 meme_template_sentiment <- meme_template_words %>%
-  inner_join(get_sentiments(sentiment_lib))%>%
+  inner_join(get_sentiments(sentiment_lib), by=c("lemma" = "word"))%>%
   count(templateName, index, sentiment) %>%
   spread(sentiment, n, fill = 0) %>%
   mutate(sentiment = positive - negative)
@@ -111,7 +113,7 @@ ggplot(philosoraptor_sentiment, aes(index, sentiment, fill = templateName)) +
 
 # Plot most positive and negative words
 meme_template_word_counts <- meme_template_words %>%
-  inner_join(get_sentiments(sentiment_lib)) %>%
+  inner_join(get_sentiments(sentiment_lib), by = c("word" = "lemma")) %>%
   count(word, sentiment, sort = TRUE) %>%
   ungroup()
 
@@ -131,7 +133,7 @@ meme_template_word_counts %>%
 
 
 meme_template_words %>%
-  inner_join(get_sentiments(sentiment_lib)) %>%
+  inner_join(get_sentiments(sentiment_lib), by = c("lemma" = "word")) %>%
   count(word, sentiment, sort = TRUE) %>%
   acast(word ~ sentiment, value.var = "n", fill = 0) %>%
   comparison.cloud(colors = c("gray20", "gray80"),

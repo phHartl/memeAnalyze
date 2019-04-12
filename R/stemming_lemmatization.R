@@ -28,7 +28,7 @@ if (!exists("haiku_tidy")){
   load("haiku_tidy.RData")
 }
 
-lemma_unique <- haiku_tidy %>%
+lemma_unique <- meme_template_words %>%
   select(word) %>%
   mutate(word_clean = str_replace_all(word,"\u2019s|'s","")) %>%
   mutate(word_clean = ifelse(str_detect(word_clean,"[^[:alpha:]]"),NA,word_clean)) %>%
@@ -38,8 +38,6 @@ lemma_unique <- haiku_tidy %>%
 
 lemma_unique<-lemma_unique %>%
   mutate(word_stem = wordStem(word_clean, language="english"))
-
-
 
 
 #### Stemming
@@ -142,6 +140,8 @@ lemma_unique <- lemma_unique %>%
                            word_frequencies = word_frequencies)) %>%
   mutate(synonym = ifelse(is.na(synonym), lemma, synonym))
 
+write.csv(lemma_unique[1:5],file = "R/csv-out/lemmatisation.csv")
+
 n_orig <- lemma_unique %>% 
   inner_join(tidytext::get_sentiments("bing"),
              by=c("word" = "word")) %>% 
@@ -149,16 +149,30 @@ n_orig <- lemma_unique %>%
 
 n_orig
 
+n_stem <- lemma_unique %>% 
+  inner_join(tidytext::get_sentiments("bing"),
+             by=c("word_stem" = "word")) %>% 
+  nrow()
 
+n_stem
 
+n_clean <- lemma_unique %>% 
+  inner_join(tidytext::get_sentiments("bing"),
+             by=c("word_clean" = "word")) %>% 
+  nrow()
 
+n_clean
 
+n_lemma <- lemma_unique %>% 
+  inner_join(tidytext::get_sentiments("bing"),
+             by=c("lemma" = "word")) %>% 
+  nrow()
 
+n_lemma
 
+n_synonym <- lemma_unique %>% 
+  inner_join(tidytext::get_sentiments("bing"),
+             by=c("synonym" = "word")) %>% 
+  nrow()
 
-
-
-
-
-
-
+n_synonym
