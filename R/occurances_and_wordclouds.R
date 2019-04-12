@@ -130,7 +130,7 @@ words <-meme_template_words %>%
   anti_join(stopwords_watermarks,by=c("word"="X1")) 
   
 
-word_dfm <- dfm(words$word, remove = stopwords_custom, stopwords_watermarks)
+word_dfm <- dfm(words$word, remove = dplyr::union(stopwords_custom, stopwords_watermarks))
 textplot_wordcloud(word_dfm, rotation = 0.25, 
                    color = rev(RColorBrewer::brewer.pal(10, "RdBu")))
 
