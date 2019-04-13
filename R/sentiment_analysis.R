@@ -30,6 +30,9 @@ source("R/clean_text.R")
 stopwords <- read_csv("R/stopword_lists/stopwords.txt", col_names = FALSE)
 stopwords_custom <- read_csv("R/stopword_lists/stopwords_custom.txt", col_names = FALSE)
 
+# Reading lemmata
+lemma_unique <- read_csv("R/csv-out/lemmatisation.csv")
+
 ##############################################
 
 meme_template_texts<-memes%>%
@@ -58,11 +61,12 @@ meme_occurences <- meme_template_texts%>%group_by(templateName)%>%summarise(n=n(
 
 
 ###
-sentiment_lib = "bing"
+#sentiment_lib = "bing"
 #sentiment_lib = "afinn"
-#sentiment_lib = "NRC"
+sentiment_lib = "nrc"
 
 # Plot sentiment of each meme template
+get_sentiments(sentiment_lib)
 
 meme_template_sentiment <- meme_template_words %>%
   inner_join(get_sentiments(sentiment_lib), by=c("lemma" = "word"))%>%
@@ -113,12 +117,14 @@ ggplot(philosoraptor_sentiment, aes(index, sentiment, fill = templateName)) +
 
 # Plot most positive and negative words
 meme_template_word_counts <- meme_template_words %>%
-  inner_join(get_sentiments(sentiment_lib), by = c("word" = "lemma")) %>%
+  inner_join(get_sentiments(sentiment_lib), by = c("lemma" = "word")) %>%
   count(word, sentiment, sort = TRUE) %>%
   ungroup()
 
 meme_template_word_counts %>%
   group_by(sentiment) %>%
+  filter(sentiment != "positive") %>% # for nrc
+  filter(sentiment != "negative") %>% # for nrc
   top_n(15) %>%
   ungroup() %>%
   mutate(word = reorder(word, n)) %>%
