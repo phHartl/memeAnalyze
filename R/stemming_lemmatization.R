@@ -9,12 +9,13 @@
 library(rJava)
 library(koRpus)
 #Install english language
+#install.koRpus.lang("en")
 library(koRpus.lang.en)
 library(SnowballC)
 
 library(tidyverse) 
 library(stringr)
-
+library(dplyr)
 library(wordnet)
 
 
@@ -53,12 +54,13 @@ lemma_unique<-lemma_unique %>%
 #                        TT.options=list(
 #                          path="~/Downloads/TreeTagger", preset = "en")
 #)
+# c:/Users/domin/Desktop/Grusch/TreeTagger/
 
 #Should use a predefined config instead for better results -> we would need a proper lexcion
 
 lemma_tagged <- treetag(lemma_unique$word_clean, format = "obj",
                           treetagger="/home/philipp/Downloads/TreeTagger/cmd/tree-tagger-english", lang="en")
-
+#C:/Users/domin/Desktop/Grusch/TreeTagger/
 
 lemma_tagged_tbl <- tbl_df(lemma_tagged@TT.res)
 
@@ -176,3 +178,15 @@ n_synonym <- lemma_unique %>%
   nrow()
 
 n_synonym
+
+
+?arrange
+
+
+wclasses <- lemmatisation %>%
+  group_by(wclass) %>%
+  summarise(n = n()) %>%
+  arrange(desc(n)) %>%
+  write.csv(.,file = "R/csv-out/word_classes.csv")
+
+
