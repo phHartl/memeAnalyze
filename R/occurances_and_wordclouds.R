@@ -86,13 +86,6 @@ most_frequent_words <- memes %>%
 total_and_average_tokens_in_templates <- read_csv("R/csv-out/total_and_average_tokens_in_templates.csv")
 most_frequent_words <- read_csv("R/csv-out/10_most_frequent_tokens_in_templates.csv")
 
-if(FALSE){
-  stopword_testing <- word_freq_total%>%
-    filter(grepl('meme', word))%>%
-    sort(n, decreasing = FALSE) %>%
-    select(word) %>%
-    write.csv(.,file = "R/csv-out/stopword_testing.csv")
-}
 
 gc()
 
