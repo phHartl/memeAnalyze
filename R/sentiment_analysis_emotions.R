@@ -25,9 +25,11 @@ memes_without_text <- memes%>%filter(is.na(text))
 # pull emotion words and aggregate by year and emotion terms
 emotions <- memes %>% 
   unnest_tokens(word, text) %>%                           
-  anti_join(stopwords_custom, by=c("word"="X1")) %>%                  
+  anti_join(stopwords_custom, by=c("word"="X1")) %>%
+  inner_join(lemma_unique)%>%
+  filter(!is.na(lemma))%>%
   filter(!grepl('[0-9]', word)) %>%
-  left_join(get_sentiments("nrc"), by = "word") %>%
+  left_join(get_sentiments("nrc"), by = c("lemma" = "word")) %>%
   filter(!(sentiment == "negative" | sentiment == "positive")) %>%
   group_by(templateName, sentiment) %>%
   summarize( freq = n()) %>%
