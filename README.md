@@ -24,7 +24,7 @@ This includes R files for:
   - pre-processing files for text cleaning and stemming/lemmatisation
   
   
-Also included are:
+Also included in the R directory are:
   - a folder with used stop word lists
   - a out folder for generated csv, which were used in the paper
   - a img folder containing all relevant images that were generated
