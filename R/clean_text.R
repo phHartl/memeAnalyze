@@ -6,6 +6,7 @@ clean_text<-function(text){
     mention_pattern <- "@([[:alnum:]]|[_])+"
     strip_RT_pattern<-"RT\\s@([[:alnum:]]|[_])+:"
 
+    # Origin of this file is from Florian Meiers (Uni Regensburg) course about twitter corpus analysis
     #URLs and Mentions removal
     #text<-str_replace_all(text,pattern=url_pattern,replacement = "")
     #text<-str_replace_all(text,pattern=mention_pattern,replacement="")

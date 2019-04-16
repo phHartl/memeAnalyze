@@ -10,15 +10,18 @@ library(reshape2)
 library(wordcloud)
 library(readr)
 
-
+# This code was adapted from: 
 # https://www.tidytextmining.com/sentiment.html
 
 
 # Import data
 memes <- read_csv("nodeyourmeme/memes.csv")
 #View(memes)
+
+# Remove all entries which contain a GIF-image
 memes <- memes%>%filter(!is.na(text))%>%filter(!grepl('.gif', url))
 
+# Remove empty entries not containing any text 
 memes_without_text <- memes%>%filter(is.na(text))
 
 # Loading clean function for using in mutate
@@ -48,32 +51,32 @@ meme_template_texts<-memes%>%
   
 
 meme_template_words<-meme_template_texts%>%
-  unnest_tokens(word, newDoc)
+  unnest_tokens(word, newDoc)   # Tokenization
 
 meme_template_words<-meme_template_words%>%
-  anti_join(stopwords_custom,by=c("word"="X1"))
+  anti_join(stopwords_custom,by=c("word"="X1")) # Excluding stop words     
 
+# Remove all token where no lemma can be found
 meme_template_words<-meme_template_words%>%inner_join(lemma_unique)%>%filter(!is.na(lemma))
 
-# spread of memes inside corpus -> percent of each meme 
+# spread of memes inside corpus -> percent of each meme (cleaned corpus size: 6797)
+meme_occurences <- meme_template_texts%>%group_by(templateName)%>%summarise(n=n()/nrow(meme_template_texts))
 
-meme_occurences <- meme_template_texts%>%group_by(templateName)%>%summarise(n=n()/6797)
 
-
-###
-#sentiment_lib = "bing"
+### Selection of the sentiment lexicon
+sentiment_lib = "bing"
 #sentiment_lib = "afinn"
-sentiment_lib = "nrc"
-
-# Plot sentiment of each meme template
+#sentiment_lib = "nrc"
 get_sentiments(sentiment_lib)
 
+# Calculate sentiments
 meme_template_sentiment <- meme_template_words %>%
   inner_join(get_sentiments(sentiment_lib), by=c("lemma" = "word"))%>%
   count(templateName, index, sentiment) %>%
   spread(sentiment, n, fill = 0) %>%
   mutate(sentiment = positive - negative)
 
+# Plot overview over all text sentiments, partitioned by their corresponding template
 ggplot(meme_template_sentiment, aes(index, sentiment, fill = templateName)) +
   geom_col(show.legend = FALSE) +
   #facet_wrap(~templateName, ncol = 2, scales = "free_y")
@@ -81,7 +84,11 @@ ggplot(meme_template_sentiment, aes(index, sentiment, fill = templateName)) +
   geom_hline(yintercept=0)
   #facet_wrap(~templateName, ncol = 2, scales = "free_x")
 
-# Plot sentiment of a single template
+
+
+####
+
+# Plot sentiment of a single template - 5 ones chosen here
 grumpy_cat_sentiment <- dplyr::filter(meme_template_sentiment, templateName =="Grumpy Cat")
 ggplot(grumpy_cat_sentiment, aes(index, sentiment, fill = templateName)) +
   geom_col(show.legend = FALSE) +
@@ -123,8 +130,8 @@ meme_template_word_counts <- meme_template_words %>%
 
 meme_template_word_counts %>%
   group_by(sentiment) %>%
-  filter(sentiment != "positive") %>% # for nrc
-  filter(sentiment != "negative") %>% # for nrc
+  # filter(sentiment != "positive") %>% # for nrc lexicon
+  # filter(sentiment != "negative") %>% # for nrc lexicon
   top_n(15) %>%
   ungroup() %>%
   mutate(word = reorder(word, n)) %>%
@@ -137,7 +144,7 @@ meme_template_word_counts %>%
 
 
 
-
+# Sentiment word cloud
 meme_template_words %>%
   inner_join(get_sentiments(sentiment_lib), by = c("lemma" = "word")) %>%
   count(word, sentiment, sort = TRUE) %>%

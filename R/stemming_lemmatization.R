@@ -30,15 +30,13 @@ if (!exists("haiku_tidy")){
 }
 
 lemma_unique <- meme_template_words %>%
+  # Getting a filtered df of words in corpus
   select(word) %>%
   mutate(word_clean = str_replace_all(word,"\u2019s|'s","")) %>%
   mutate(word_clean = ifelse(str_detect(word_clean,"[^[:alpha:]]"),NA,word_clean)) %>%
   filter(!duplicated(word_clean)) %>%
   filter(!is.na(word_clean)) %>%
   arrange(word)
-
-lemma_unique<-lemma_unique %>%
-  mutate(word_stem = wordStem(word_clean, language="english"))
 
 
 #### Stemming
@@ -54,9 +52,7 @@ lemma_unique<-lemma_unique %>%
 #                        TT.options=list(
 #                          path="~/Downloads/TreeTagger", preset = "en")
 #)
-# c:/Users/domin/Desktop/Grusch/TreeTagger/
 
-#Should use a predefined config instead for better results -> we would need a proper lexcion
 
 lemma_tagged <- treetag(lemma_unique$word_clean, format = "obj",
                         treetagger="/home/philipp/Downloads/TreeTagger/cmd/tree-tagger-english", lang="en")
@@ -77,7 +73,6 @@ lemma_unique <- lemma_unique %>%
 
 
 #### Replacing with more common synonym
-
 synonyms_failsafe <- function(word, pos){
   tryCatch({
     syn_list = list(syn=synonyms(word, toupper(pos)))
@@ -179,7 +174,7 @@ n_synonym <- lemma_unique %>%
 
 n_synonym
 
-
+# Results of POS-tagging, saving to file
 wclasses <- lemmatisation %>%
   group_by(wclass) %>%
   summarise(n = n()) %>%
