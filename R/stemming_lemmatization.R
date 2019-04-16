@@ -1,7 +1,7 @@
 #install.packages("koRpus")
 #install.packages("SnowballC")
 #install.packages("wordnet")
- 
+
 # This code is from source:
 # http://www.bernhardlearns.com/2017/04/cleaning-words-with-r-stemming.html
 
@@ -59,7 +59,7 @@ lemma_unique<-lemma_unique %>%
 #Should use a predefined config instead for better results -> we would need a proper lexcion
 
 lemma_tagged <- treetag(lemma_unique$word_clean, format = "obj",
-                          treetagger="/home/philipp/Downloads/TreeTagger/cmd/tree-tagger-english", lang="en")
+                        treetagger="/home/philipp/Downloads/TreeTagger/cmd/tree-tagger-english", lang="en")
 #C:/Users/domin/Desktop/Grusch/TreeTagger/
 
 lemma_tagged_tbl <- tbl_df(lemma_tagged@TT.res)
@@ -180,13 +180,9 @@ n_synonym <- lemma_unique %>%
 n_synonym
 
 
-?arrange
-
-
 wclasses <- lemmatisation %>%
   group_by(wclass) %>%
   summarise(n = n()) %>%
   arrange(desc(n)) %>%
   write.csv(.,file = "R/csv-out/word_classes.csv")
-
 
