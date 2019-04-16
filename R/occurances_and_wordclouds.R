@@ -70,6 +70,7 @@ ave_words_count <- memes %>%
   summarize(totalTokens= n()) %>%
   mutate(averageTokens=round((totalTokens/templateMakros), digits=0))%>%
   ungroup() %>%
+  arrange(., averageTokens) %>%
   write.csv(.,file = "R/csv-out/total_and_average_tokens_in_templates.csv")
 
 most_frequent_words <- memes %>%
