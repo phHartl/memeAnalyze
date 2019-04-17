@@ -1,4 +1,5 @@
 const limit = require('simple-rate-limiter');
+//Limit parallel request to prevent getting IP banned by knowyourmeme.com
 const request = limit(require("request")).to(7).per(3000);
 const cheerio = require('cheerio');
 
@@ -8,7 +9,9 @@ function getSearchURL(term) {
     return config.BASE_URL + config.SEARCH_URL + term.split(' ').map(s => encodeURIComponent(s)).join('+');
 }
 
-//Memeclass prototype -> one meme is a incarnation connected to its template
+/**
+ * Data structure to save a meme: url, OCR text, name, about, templateURL, base image & meta data
+ */
 class Meme {
     constructor(url, text, templateName, templateAbout, templateUrl, templateImage, templateViews, templateYear, templateOrigin, templateTags) {
         this.url = url;
@@ -48,6 +51,11 @@ function makeRequest(url) {
     })
 }
 
+/**
+ * Finds url to searched term
+ * @param term meme name
+ * @returns {Promise<string>} - A promise resolving to the first results URL
+ */
 async function findFirstSearchResult(term) {
     let body;
     try {
@@ -68,7 +76,12 @@ async function findFirstSearchResult(term) {
     return config.BASE_URL + searchItem.attribs.href;
 }
 
-//This function parses the body of a meme side, get's its image(s) and information
+/**
+ * This function provides the main crawling logic by getting all images of a provided template (moderator and user content)
+ * @param body HTML document of meme template to be crawled
+ * @param url URL of html document
+ * @returns {Promise<null|Array>} - A promise resolving to all crawled meme incarnations with their data - see class meme
+ */
 async function parseMemeBody(body, url) {
     let $ = cheerio.load(body);
 
@@ -125,7 +138,7 @@ async function parseMemeBody(body, url) {
     //Additionally get user uploaded images -> doing a ton of requests here
     let memes = [];
     if (hasRecentImages !== 0) {
-        let maxPages = Math.ceil(hasRecentImages/20); //Caution -> hasRecentImages/20 is max but you will get ip banned doing this
+        let maxPages = Math.ceil(hasRecentImages/20); //Caution -> hasRecentImages/20 is max but you will get ip banned doing this without limiting your requests
         for (let i = 0; i < maxPages; i++) {
             let memesPerPage = await findPhotosForEntry(url, i).then(async function (res) {
                 let currentImages = res.recent_examples;
@@ -150,6 +163,12 @@ async function parseMemeBody(body, url) {
     }
 }
 
+/**
+ * Crawls a whole page of images for provided meme template
+ * @param url template url
+ * @param page webpage number
+ * @returns {Promise<*>} A promsie resolving to the image urls
+ */
 async function findPhotosForEntry(url, page) {
     if (page === undefined) {
         page = 1;
@@ -173,6 +192,11 @@ async function searchPhotos(body) {
     return {recent_examples: recent_examples}
 };
 
+/**
+ * This function crawls all entries to a certain page of the sub category image macros
+ * @param page number of page to be crawled (e.g. 1)
+ * @returns {Promise<Array>} - A promise resovling to an array of meme objects (examples)
+ */
 async function getImageMacros(page) {
     if (page === undefined) {
         page = 1;
@@ -257,7 +281,11 @@ async function doRandomSearch(tries = 3) {
     return parsed;
 }
 
-//Performs an API Request -> JSON File with credentials needed
+/**
+ * Performs an OCR request to setup you need a JSON file with credentials ready on your system (https://cloud.google.com/docs/authentication/production)
+ * @param fileName URL to image which needs to be recognized
+ * @returns {Promise<any>} - A promise containing the text response
+ */
 function textRecognitionByGoogle(fileName) {
     return new Promise(function (resolve, reject) {
         client

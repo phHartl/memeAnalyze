@@ -1,23 +1,23 @@
 {
   "name": "nodeyourmeme",
-  "version": "2.0.0",
-  "description": "Know your meme search API for node.js!",
+  "version": "3.0.0",
+  "description": "Know your meme image macro API for node.js!",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/beastwilson/nodeyourmeme.git"
+    "url": "git+https://github.com/phHartl/memeAnalyze.git"
   },
   "keywords": [
     "knowyourmeme",
     "meme",
     "api",
-    "knowyourmeme",
-    "api"
+    "image macros",
+    "OCR"
   ],
-  "author": "ArcticZeroo, scaredn00b",
+  "author": "phHartl, ArcticZeroo",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/scaredn00b/memeAnalyze/issues"
